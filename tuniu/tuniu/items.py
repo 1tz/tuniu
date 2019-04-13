@@ -37,9 +37,10 @@ class Review(scrapy.Item):
     rate 评分
     desc 用户评分描述
     '''
-    spot_id = scrapy.Field()
     nickname = scrapy.Field()
+    spot_id = scrapy.Field()
+    spot_name = scrapy.Field()
     rate = scrapy.Field()
     desc = scrapy.Field()
     upvote = scrapy.Field()
-    reply = scrapy.Field()
+    num_reply = scrapy.Field()
