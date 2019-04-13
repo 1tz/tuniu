@@ -3,7 +3,7 @@ import os
 import time
 import scrapy
 from fake_useragent import UserAgent
-from tuniu.items import Spot, Review
+from tuniu.items import Spot
 
 class TnSpider(scrapy.Spider):
     name = 'tn'
@@ -101,17 +101,22 @@ class TnSpider(scrapy.Spider):
         '''解析景点信息
         '''
         spot = Spot()
-        spot['id'] = response.url.split('/')[1]
-        print(response.url)
+        spot['id'] = response.url.split('/')[-3]
         spot['name'] = response.xpath('//h1[@class="signal"]/text()').extract_first()
         spot['desc'] = response.xpath('//div[@class="coat"]/p/text()').extract_first()
         spot['addr'] = response.xpath('//div[@class="route"]/div[1]/div[2]/text()').extract_first()
         spot['open_time'] = response.xpath('//div[@class="route"]/div[2]/div[2]/text()').extract_first()
         traffic_names = response.xpath('//p[@class="traffic-name"]/text()').extract()
         traffic_mentions = response.xpath('//p[@class="traffic-mention"]/text()').extract()
-        traffic = zip(traffic_names,traffic_mentions)
-        traffic_dict = dict((name, mention) for name, mention in traffic)
+        traffic_dict = dict((name, mention) for name, mention in zip(traffic_names,traffic_mentions))
         spot['traffic'] = traffic_dict
         spot['rec_play_time'] = response.xpath('//div[@class="content far"]/div[2]/text()').extract_first()
-        
-        # spot['location'] = response.xpath('')
+        must_site_urls = response.xpath('//div[@class="site-distance"]/div[1]/div/div/a/@href').extract()
+        must_site_ids = [url.split('/')[1] for url in must_site_urls]
+        must_site_dists = response.xpath('//div[@class="site-distance"]/div[1]/div/div/span/text()').extract()
+        must_site_dict = dict((i, dist) for i, dist in zip(must_site_ids, must_site_dists))
+        near_site_urls = response.xpath('//div[@class="site-distance"]/div[2]/div/div/a/@href').extract()
+        near_site_ids = [url.split('/')[1] for url in must_site_urls]
+        near_site_dists = response.xpath('//div[@class="site-distance"]/div[2]/div/div/span/text()').extract()
+        near_site_dict = dict((i, dist) for i, dist in zip(must_site_ids, must_site_dists))
+        spot['site_dist'] = {'must': must_site_dict, 'near': near_site_dict}

@@ -25,7 +25,7 @@ class Spot(scrapy.Item):
     open_time = scrapy.Field()
     traffic = scrapy.Field()
     rec_play_time = scrapy.Field()
-    location = scrapy.Field()
+    site_dist = scrapy.Field()
 
 class Review(scrapy.Item):
     '''评论
