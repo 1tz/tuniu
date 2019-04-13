@@ -10,16 +10,19 @@ import scrapy
 
 class Spot(scrapy.Item):
     '''景点
+    id 景点索引
     name 景点名称
     desc 景点描述
+    city 景点所在城市
     addr 景点详细地址
     open_time 景点开放时间
-    ref_play_time 推荐游玩时长
     traffic 交通信息
-    location 与必玩景点、附近景点距离
+    ref_play_time 推荐游玩时长
+    site_dist 与必玩景点、附近景点距离
     '''
     id = scrapy.Field()
     name = scrapy.Field()
+    city = scrapy.Field()
     desc = scrapy.Field()
     addr = scrapy.Field()
     open_time = scrapy.Field()
@@ -34,7 +37,9 @@ class Review(scrapy.Item):
     rate 评分
     desc 用户评分描述
     '''
+    spot_id = scrapy.Field()
     nickname = scrapy.Field()
-    attraction = scrapy.Field()
     rate = scrapy.Field()
     desc = scrapy.Field()
+    upvote = scrapy.Field()
+    reply = scrapy.Field()

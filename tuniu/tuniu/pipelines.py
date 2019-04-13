@@ -6,16 +6,28 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
+from tuniu.spiders.spot import SpotSpider
+from tuniu.spiders.review import ReviewSpider
+from tuniu.items import Spot, Review
 
 class TuniuPipeline(object):
 
     def open_spider(self, spider):
-        self.file = open('tuniu.txt', 'w')
+        if isinstance(spider, SpotSpider):
+            self.spot_file = open('spot.json', 'w', encoding='utf-8')
+        elif isinstance(spider, ReviewSpider):
+            self.review_file = open('review.json', 'w', encoding='utf-8')
 
     def close_spider(self, spider):
-        self.file.close()
+        if isinstance(spider, SpotSpider):
+            self.spot_file.close()
+        elif isinstance(spider, ReviewSpider):
+            self.review_file.close()
 
     def process_item(self, item, spider):
-        line = json.dumps(dict(item)) + "\n"
-        self.file.write(line)
+        line = json.dumps(dict(item), ensure_ascii=False) + "\n"
+        if isinstance(spider, SpotSpider):
+            self.spot_file.write(line)
+        elif isinstance(spider, ReviewSpider):
+            self.review_file.write(line)
         return item

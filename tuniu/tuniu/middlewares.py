@@ -99,7 +99,10 @@ class TuniuDownloaderMiddleware(object):
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
-        pass
+        print("\n代理出现异常，选择新的代理....\n")
+        proxy = requests.get('http://127.0.0.1:5010/get').text
+        request.meta['proxy'] = 'http://' + proxy
+        return request
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
