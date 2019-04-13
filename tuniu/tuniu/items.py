@@ -18,6 +18,7 @@ class Spot(scrapy.Item):
     traffic 交通信息
     location 与必玩景点、附近景点距离
     '''
+    id = scrapy.Field()
     name = scrapy.Field()
     desc = scrapy.Field()
     addr = scrapy.Field()

@@ -4,7 +4,7 @@
 #
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
+import requests
 from scrapy import signals
 
 
@@ -78,7 +78,9 @@ class TuniuDownloaderMiddleware(object):
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-        return None
+        proxy = requests.get('http://127.0.0.1:5010/get').text
+        request.meta['proxy'] = 'http://' + proxy
+
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
