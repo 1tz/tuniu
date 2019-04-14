@@ -68,8 +68,7 @@ class ReviewSpider(scrapy.Spider):
     def get_review(self, response):
         '''解析评论
         '''
-        html_string = json.loads(response.text)['data']
-        html = lxml.html.fromstring(html_string)
+        html = lxml.html.fromstring(response.text[24:-2])
         for review_div in html.xpath('//div[@class="item"]'):
             if review_div.xpath('div[2]/div[1]/p[2]/span[2]/text()')[0] == '景点':
                 review = Review()

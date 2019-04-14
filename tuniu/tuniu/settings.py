@@ -14,7 +14,7 @@ BOT_NAME = 'tuniu'
 SPIDER_MODULES = ['tuniu.spiders']
 NEWSPIDER_MODULE = 'tuniu.spiders'
 
-LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'INFO'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tuniu (+http://www.yourdomain.com)'

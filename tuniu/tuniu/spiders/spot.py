@@ -53,21 +53,22 @@ class SpotSpider(scrapy.Spider):
     def get_city_page(self, response):
         '''获取城市页数，并发送请求
         '''
-        num_citys = int(response.xpath('//div[@id="list"]/h2/a/text()').extract_first())
-        poiId = response.url.split('/')[-3].split('-')[-1]
-        max_page = int((num_citys - 1) / 12) + 1
-        for cur_page in range(1, max_page + 1):
-            unix_time_stamp = str(self.get_unix_time_stamp())
-            url = self.tuniu_url + '/newguide/api/widget/render/?widget=guide.HotDestinationWidget&params%5BpoiId%5D=' + poiId + '&params%5Bpage%5D=' + str(cur_page) + '&_=' + unix_time_stamp
-            yield scrapy.Request(url=url,
-                callback=self.get_city_urls,
-                headers=self.get_headers())
+        num_citys = response.xpath('//div[@id="list"]/h2/a/text()').extract_first()
+        if num_citys != None:
+            num_citys = int(num_citys)
+            poiId = response.url.split('/')[-3].split('-')[-1]
+            max_page = int((num_citys - 1) / 12) + 1
+            for cur_page in range(1, max_page + 1):
+                unix_time_stamp = str(self.get_unix_time_stamp())
+                url = self.tuniu_url + '/newguide/api/widget/render/?widget=guide.HotDestinationWidget&params%5BpoiId%5D=' + poiId + '&params%5Bpage%5D=' + str(cur_page) + '&_=' + unix_time_stamp
+                yield scrapy.Request(url=url,
+                    callback=self.get_city_urls,
+                    headers=self.get_headers())
     
     def get_city_urls(self, response):
         '''获取指定一页目的地城市链接
         '''
-        html_string = json.loads(response.text)['data']
-        html = lxml.html.fromstring(html_string)
+        html = lxml.html.fromstring(response.text[24:-2])
         for city_url in html.xpath('//a[@class="main"]/@href'):
             city_url = self.tuniu_url + city_url
             yield scrapy.Request(url=city_url,
@@ -98,6 +99,7 @@ class SpotSpider(scrapy.Spider):
         if response.xpath('//div[@class="page-bottom"]/a[last()]/text()').extract_first() == '下一页':
             next_url = self.tuniu_url + response.xpath('//div[@class="page-bottom"]/a[last()]/@href').extract_first()
             yield scrapy.Request(url=next_url,
+                meta={'city': response.meta['city']},
                 callback=self.get_spot_urls,
                 headers=self.get_headers())
 
