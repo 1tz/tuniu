@@ -15,11 +15,11 @@ class TuniuPipeline(object):
 
     def open_spider(self, spider):
         if isinstance(spider, SpotSpider):
-            self.spot_file = open('spot.json', 'w+', encoding='utf-8')
+            self.spot_file = open('spot.json', 'a', encoding='utf-8')
         elif isinstance(spider, ReviewSpider):
-            self.review_file = open('review.json', 'w+', encoding='utf-8')
+            self.review_file = open('review.json', 'a', encoding='utf-8')
         elif isinstance(spider, RecapSpider):
-            self.recap_file = open('recap.json', 'w+', encoding='utf-8')
+            self.recap_file = open('recap.json', 'a', encoding='utf-8')
 
     def close_spider(self, spider):
         if isinstance(spider, SpotSpider):
