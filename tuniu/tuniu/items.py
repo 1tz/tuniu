@@ -22,6 +22,7 @@ class Spot(scrapy.Item):
     '''
     id = scrapy.Field()
     name = scrapy.Field()
+    nation = scrapy.Field()
     city = scrapy.Field()
     desc = scrapy.Field()
     addr = scrapy.Field()
@@ -39,8 +40,10 @@ class Review(scrapy.Item):
     '''
     nickname = scrapy.Field()
     spot_id = scrapy.Field()
+    spot_nation_rate = scrapy.Field()
     spot_name = scrapy.Field()
     rate = scrapy.Field()
     desc = scrapy.Field()
+    review_time = scrapy.Field()
     upvote = scrapy.Field()
     num_reply = scrapy.Field()

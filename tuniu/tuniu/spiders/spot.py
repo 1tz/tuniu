@@ -15,14 +15,29 @@ class SpotSpider(scrapy.Spider):
 
     def get_headers(self):
         headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate',
-            'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
-            'dnt': 1,
-            'upgrade-insecure-requests': 1,
-            'user-agent': str(UserAgent().random)
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
+            'DNT': 1,
+            'Connection': 'keep-alive',
+            'Host': 'www.tuniu.com',
+            'Upgrade-Insecure-Requests': 1,
+            'User-Agent': str(UserAgent().random)
         }
         return headers
+
+    def query_headers(self, refer_url):
+        headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
+            'Connection': 'keep-alive',
+            'DNT': 1,
+            'Host': 'www.tuniu.com',
+            'Referer': refer_url,
+            'User-Agent': str(UserAgent().random),
+            'X-Requested-With': 'XMLHttpRequest',
+        }
 
     def get_unix_time_stamp(self):
         return int(round(time.time() * 1000))
@@ -45,10 +60,14 @@ class SpotSpider(scrapy.Spider):
     def switch_tag_to_destination(self, response):
         '''切换到目的地城市链接
         '''
-        switch_tag_url = self.tuniu_url + response.xpath('//ul[@class="cf"]/li[3]/a/@href').extract_first()
-        yield scrapy.Request(url=switch_tag_url,
-            callback=self.get_city_page,
-            headers=self.get_headers())
+        nation = response.xpath('//div[@class="f_left"]/h1/text()').extract_first()
+        url = response.xpath('//div[@class="destination wrapper"]/div[1]/a/@href').extract_first()
+        if url != None:
+            switch_tag_url = self.tuniu_url + url
+            yield scrapy.Request(url=switch_tag_url,
+                meta={'nation': nation},
+                callback=self.get_city_page,
+                headers=self.get_headers())
         
     def get_city_page(self, response):
         '''获取城市页数，并发送请求
@@ -62,30 +81,42 @@ class SpotSpider(scrapy.Spider):
                 unix_time_stamp = str(self.get_unix_time_stamp())
                 url = self.tuniu_url + '/newguide/api/widget/render/?widget=guide.HotDestinationWidget&params%5BpoiId%5D=' + poiId + '&params%5Bpage%5D=' + str(cur_page) + '&_=' + unix_time_stamp
                 yield scrapy.Request(url=url,
+                    meta={'nation': response.meta['nation']},
                     callback=self.get_city_urls,
                     headers=self.get_headers())
+
     
     def get_city_urls(self, response):
         '''获取指定一页目的地城市链接
         '''
         html = lxml.html.fromstring(response.text[24:-2])
-        for city_url in html.xpath('//a[@class="main"]/@href'):
+        for raw_city_url in html.xpath('//ul/li/a/@href')[:12]:
+            city_url = raw_city_url[2:-2]
+            if city_url == 'javascript:;':
+                continue
             city_url = self.tuniu_url + city_url
             yield scrapy.Request(url=city_url,
+                meta={'nation': response.meta['nation']},
                 callback=self.switch_tag_to_spot,
                 headers=self.get_headers())
 
     def switch_tag_to_spot(self, response):
         '''切换到某城市的景点标签下
         '''
-        city = response.xpath('//div[@class="f_left"]/h1/text()').extract_first()
-        third_tag = response.xpath('//ul[@class="cf"]/li[3]/a/text()').extract_first()
-        if third_tag == '景点':
-            third_tag_url = self.tuniu_url + response.xpath('//ul[@class="cf"]/li[3]/a/@href').extract_first()
-            yield scrapy.Request(url=third_tag_url,
-                meta={'city': city},
-                callback=self.get_spot_urls,
+        if response.xpath('//div[@id="mycomment"]/h2/text()').extract_first() == '我的点评':
+            yield scrapy.Request(url=response.url,
+                meta={'city': response.meta['nation'], 'nation': response.meta['nation']},
+                callback=self.sparse_spot,
                 headers=self.get_headers())
+        else:
+            city = response.xpath('//div[@class="f_left"]/h1/text()').extract_first()
+            spot_tag = response.xpath('//div[@class="module module1 fl"]/div/a/@href').extract_first()
+            if spot_tag != 'javascript:void(0)':
+                spot_tag_url = self.tuniu_url + spot_tag
+                yield scrapy.Request(url=spot_tag_url,
+                    meta={'city': city, 'nation': response.meta['nation']},
+                    callback=self.get_spot_urls,
+                    headers=self.get_headers())
 
     def get_spot_urls(self, response):
         '''获取某城市所有景点连接，这里有翻页
@@ -93,13 +124,13 @@ class SpotSpider(scrapy.Spider):
         for spot_url in response.xpath('//div[@class="allSpots"]/ul/li/a/@href').extract():
             spot_url = self.tuniu_url + spot_url
             yield scrapy.Request(url=spot_url,
-                meta={'city': response.meta['city']},
+                meta={'city': response.meta['city'], 'nation': response.meta['nation']},
                 callback=self.sparse_spot,
                 headers=self.get_headers())
         if response.xpath('//div[@class="page-bottom"]/a[last()]/text()').extract_first() == '下一页':
             next_url = self.tuniu_url + response.xpath('//div[@class="page-bottom"]/a[last()]/@href').extract_first()
             yield scrapy.Request(url=next_url,
-                meta={'city': response.meta['city']},
+                meta={'city': response.meta['city'], 'nation': response.meta['nation']},
                 callback=self.get_spot_urls,
                 headers=self.get_headers())
 
@@ -109,6 +140,7 @@ class SpotSpider(scrapy.Spider):
         spot = Spot()
         spot['id'] = response.url.split('/')[-3]
         spot['name'] = response.xpath('//h1[@class="signal"]/text()').extract_first()
+        spot['nation'] = response.meta['nation']
         spot['city'] = response.meta['city']
         spot['desc'] = response.xpath('//div[@class="coat"]/p/text()').extract_first()
         spot['addr'] = response.xpath('//div[@class="route"]/div[1]/div[2]/text()').extract_first()
