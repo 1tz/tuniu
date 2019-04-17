@@ -20,8 +20,9 @@ class ReviewSpider(scrapy.Spider):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
             'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
-            'DNT': 1,
+            # 'Cache-Control': 'max-age=0',
             'Connection': 'keep-alive',
+            'DNT': 1,
             'Host': 'www.tuniu.com',
             'Upgrade-Insecure-Requests': 1,
             'User-Agent': str(UserAgent().random)
@@ -74,7 +75,7 @@ class ReviewSpider(scrapy.Spider):
     def get_review(self, response):
         '''解析评论
         '''
-        raw_html = response.text[24:-2].replace('\\', '')
+        raw_html = response.text[24:-2].replace('\\', '').replace('>rn','>')
         html = lxml.html.fromstring(raw_html)
         for review_div in html.xpath('//div[@class="item"]'):
             if review_div.xpath('div[2]/div[1]/p[2]/span[2]/text()')[0] == '景点':
