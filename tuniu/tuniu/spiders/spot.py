@@ -22,7 +22,7 @@ class SpotSpider(scrapy.Spider):
             'Connection': 'keep-alive',
             'Host': 'www.tuniu.com',
             'Upgrade-Insecure-Requests': 1,
-            'User-Agent': str(UserAgent().random)
+            'User-Agent': str(UserAgent(verify_ssl=False).random)
         }
         return headers
 
