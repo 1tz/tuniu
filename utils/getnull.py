@@ -1,8 +1,9 @@
 import json
 
 def main():
+    '''获取爬取景点中名称缺失的数据并写入文件'''
     recap = open('recapurl.json', 'w', encoding='utf-8')
-    with open('../spot.json', 'r', encoding='utf8') as f:
+    with open('../tuniu/spot.json', 'r', encoding='utf8') as f:
         for line in f:
             spot = json.loads(line)
             if spot['name'] == None:

@@ -8,12 +8,14 @@ from fake_useragent import UserAgent
 from tuniu.items import Spot
 
 class SpotSpider(scrapy.Spider):
+    '''爬取景点信息'''
     name = 'spot'
     allowed_domains = ['tuniu.com']
 
     tuniu_url = 'http://www.tuniu.com'
 
     def get_headers(self):
+        '''返回随机生成UA的header'''
         headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
             'Accept-Encoding': 'gzip, deflate',
@@ -26,40 +28,25 @@ class SpotSpider(scrapy.Spider):
         }
         return headers
 
-    def query_headers(self, refer_url):
-        headers = {
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Encoding': 'gzip, deflate',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
-            'Connection': 'keep-alive',
-            'DNT': 1,
-            'Host': 'www.tuniu.com',
-            'Referer': refer_url,
-            'User-Agent': str(UserAgent().random),
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-
     def get_unix_time_stamp(self):
+        '''获得UNIX时间戳，翻页请求中需要该参数'''
         return int(round(time.time() * 1000))
 
     def start_requests(self):
-        '''程序入口，开始爬取全球目的地
-        '''
+        '''程序入口，开始爬取全球目的地'''
         yield scrapy.Request(url='http://www.tuniu.com/place/', 
             callback=self.get_nation_urls,
             headers=self.get_headers())
 
     def get_nation_urls(self, response):
-        '''获取全球目的地国家链接
-        '''
+        '''获取全球目的地国家链接'''
         for destination_urls in response.xpath('//ul[@class="col"]/li/a/@href').extract():
             yield scrapy.Request(url=destination_urls,
                 callback=self.switch_tag_to_destination,
                 headers=self.get_headers())
 
     def switch_tag_to_destination(self, response):
-        '''切换到目的地城市链接
-        '''
+        '''切换到目的地城市链接'''
         nation = response.xpath('//div[@class="f_left"]/h1/text()').extract_first()
         url = response.xpath('//div[@class="destination wrapper"]/div[1]/a/@href').extract_first()
         if url != None:
@@ -70,8 +57,7 @@ class SpotSpider(scrapy.Spider):
                 headers=self.get_headers())
         
     def get_city_page(self, response):
-        '''获取城市页数，并发送请求
-        '''
+        '''获取城市页数，并发送翻页请求'''
         num_citys = response.xpath('//div[@id="list"]/h2/a/text()').extract_first()
         if num_citys != None:
             num_citys = int(num_citys)
@@ -87,8 +73,7 @@ class SpotSpider(scrapy.Spider):
 
     
     def get_city_urls(self, response):
-        '''获取指定一页目的地城市链接
-        '''
+        '''获取指定一页目的地城市链接'''
         html = lxml.html.fromstring(response.text[24:-2])
         for raw_city_url in html.xpath('//ul/li/a/@href')[:12]:
             city_url = raw_city_url[2:-2]
@@ -101,8 +86,7 @@ class SpotSpider(scrapy.Spider):
                 headers=self.get_headers())
 
     def switch_tag_to_spot(self, response):
-        '''切换到某城市的景点标签下
-        '''
+        '''切换到某城市的景点标签，有些国家（如新加坡）下一级直接是景点'''
         if response.xpath('//div[@id="mycomment"]/h2/text()').extract_first() == '我的点评':
             yield scrapy.Request(url=response.url,
                 meta={'city': response.meta['nation'], 'nation': response.meta['nation']},
@@ -119,8 +103,7 @@ class SpotSpider(scrapy.Spider):
                     headers=self.get_headers())
 
     def get_spot_urls(self, response):
-        '''获取某城市所有景点连接，这里有翻页
-        '''
+        '''获取某城市所有景点连接，这里有翻页'''
         for spot_url in response.xpath('//div[@class="allSpots"]/ul/li/a/@href').extract():
             spot_url = self.tuniu_url + spot_url
             yield scrapy.Request(url=spot_url,
@@ -135,8 +118,7 @@ class SpotSpider(scrapy.Spider):
                 headers=self.get_headers())
 
     def sparse_spot(self, response):
-        '''解析景点信息
-        '''
+        '''解析景点信息'''
         spot = Spot()
         spot['id'] = response.url.split('/')[-3]
         spot['name'] = response.xpath('//h1[@class="signal"]/text()').extract_first()

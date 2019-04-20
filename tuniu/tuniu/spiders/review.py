@@ -10,12 +10,14 @@ from tuniu.items import Review
 
 
 class ReviewSpider(scrapy.Spider):
+    '''爬取评论信息'''
     name = 'review'
     allowed_domains = ['tuniu.com']
     
     tuniu_url = 'http://tuniu.com/'
 
     def get_headers(self):
+        '''返回随机生成UA的header'''
         headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
             'Accept-Encoding': 'gzip, deflate',
@@ -30,26 +32,24 @@ class ReviewSpider(scrapy.Spider):
         return headers
 
     def get_unix_time_stamp(self):
+        '''获得UNIX时间戳，翻页请求中需要该参数'''
         return int(round(time.time() * 1000))
 
     def start_requests(self):
-        '''程序入口，开始爬取全球目的地
-        '''
+        '''程序入口，开始爬取全球目的地'''
         yield scrapy.Request(url='http://www.tuniu.com/place/', 
             callback=self.get_nation_urls,
             headers=self.get_headers())
 
     def get_nation_urls(self, response):
-        '''获取全球目的地国家链接
-        '''
+        '''获取全球目的地国家链接'''
         for destination_urls in response.xpath('//ul[@class="col"]/li/a/@href').extract():
             yield scrapy.Request(url=destination_urls,
                 callback=self.switch_tag_to_comment,
                 headers=self.get_headers())
 
     def switch_tag_to_comment(self, response):
-        '''切换到评论链接
-        '''
+        '''切换到评论标签'''
         switch_tag_url = response.xpath('//div[@class="interact wrapper"]/div[@class="summary"]/a/@href').extract_first()
         if switch_tag_url != None:
             switch_tag_url = self.tuniu_url + switch_tag_url
@@ -58,8 +58,7 @@ class ReviewSpider(scrapy.Spider):
                 headers=self.get_headers())
         
     def get_comment_page(self, response):
-        '''获取评论页数，并发送请求
-        '''
+        '''获取评论页数，并发送翻页请求'''
         num_comments = int(response.xpath('//span[@class="header-comment-total"]/text()').extract_first())
         nation_rate = float(response.xpath('//span[@class="header-mark"]/text()').extract_first())
         poiId = response.url.split('/')[-3].split('-')[-1]
@@ -73,8 +72,7 @@ class ReviewSpider(scrapy.Spider):
                 headers=self.get_headers())
     
     def get_review(self, response):
-        '''解析评论
-        '''
+        '''解析评论'''
         raw_html = response.text[24:-2].replace('\\', '').replace('>rn','>')
         html = lxml.html.fromstring(raw_html)
         for review_div in html.xpath('//div[@class="item"]'):

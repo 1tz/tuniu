@@ -14,6 +14,7 @@ from tuniu.items import Spot, Review
 class TuniuPipeline(object):
 
     def open_spider(self, spider):
+        '''开始运行爬虫时，按续写方式打开文件'''
         if isinstance(spider, SpotSpider):
             self.spot_file = open('spot.json', 'a', encoding='utf-8')
         elif isinstance(spider, ReviewSpider):
@@ -22,6 +23,7 @@ class TuniuPipeline(object):
             self.recap_file = open('recap.json', 'a', encoding='utf-8')
 
     def close_spider(self, spider):
+        '''爬虫结束时，关闭文件'''
         if isinstance(spider, SpotSpider):
             self.spot_file.close()
         elif isinstance(spider, ReviewSpider):
@@ -30,6 +32,7 @@ class TuniuPipeline(object):
             self.recap_file.close()
 
     def process_item(self, item, spider):
+        '''将item转为字符串格式写入对应文件中'''
         line = json.dumps(dict(item), ensure_ascii=False) + "\n"
         if isinstance(spider, SpotSpider):
             self.spot_file.write(line)

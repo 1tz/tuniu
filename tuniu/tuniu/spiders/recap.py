@@ -9,11 +9,13 @@ from tuniu.items import Spot
 
 
 class RecapSpider(scrapy.Spider):
+    '''爬取缺失信息的景点'''
     name = 'recap'
     allowed_domains = ['tuniu.com']
     start_urls = ['http://tuniu.com/']
 
     def get_headers(self):
+        '''返回随机生成UA的header'''
         headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
             'Accept-Encoding': 'gzip, deflate',
@@ -27,9 +29,8 @@ class RecapSpider(scrapy.Spider):
         return headers
 
     def start_requests(self):
-        '''程序入口，开始爬取全球目的地
-        '''
-        with open('recapurl.json', 'r', encoding='utf8') as f:
+        '''程序入口，开始爬取缺失信息的景点'''
+        with open('../utils/recapurl.json', 'r', encoding='utf8') as f:
             for line in f:
                 spot = json.loads(line)
                 yield scrapy.Request(url=spot['url'], 
@@ -38,8 +39,7 @@ class RecapSpider(scrapy.Spider):
                     headers=self.get_headers())
 
     def sparse_spot(self, response):
-        '''解析景点信息
-        '''
+        '''解析景点信息'''
         spot = Spot()
         spot['id'] = response.url.split('/')[-3]
         spot['name'] = response.xpath('//h1[@class="signal"]/text()').extract_first()

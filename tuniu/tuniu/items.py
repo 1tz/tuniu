@@ -12,8 +12,9 @@ class Spot(scrapy.Item):
     '''景点
     id 景点索引
     name 景点名称
-    desc 景点描述
+    nation 景点所在国家
     city 景点所在城市
+    desc 景点描述
     addr 景点详细地址
     open_time 景点开放时间
     traffic 交通信息
@@ -34,9 +35,14 @@ class Spot(scrapy.Item):
 class Review(scrapy.Item):
     '''评论
     nickname 昵称
-    attraction 景点名称
+    spot_id 评论景点ID
+    spot_nation_rate 评论景点所在国家的评分
+    spot_name 评论景点名称
     rate 评分
     desc 用户评分描述
+    review_time 评论时间
+    upvote 赞同数
+    num_reply 回复数
     '''
     nickname = scrapy.Field()
     spot_id = scrapy.Field()
