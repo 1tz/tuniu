@@ -217,8 +217,8 @@ class GetFreeProxy(object):
         urls = [
             'http://www.iphai.com/free/ng',
             'http://www.iphai.com/free/np',
-            'http://www.iphai.com/free/wg',
-            'http://www.iphai.com/free/wp'
+            # 'http://www.iphai.com/free/wg',
+            # 'http://www.iphai.com/free/wp'
         ]
         request = WebRequest()
         for url in urls:
